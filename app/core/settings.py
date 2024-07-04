@@ -8,6 +8,9 @@ class Settings(BaseSettings):
     DB_HOST: str
     DB_PORT: str
     DB_NAME: str
+    PORT: str
+    HOST: str
+    RELOAD: str
 
     @property
     def ASYNC_DATABASE_URL(self) -> str:
