@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "intershipback"
+version = "0.1.0"
+description = ""
+authors = ["Mizhik <vlad.mezhinskiy07@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = "^0.111.0"
+pydantic-settings = "^2.3.4"
+
+
+[tool.poetry.group.test.dependencies]
+pytest = "^8.2.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
