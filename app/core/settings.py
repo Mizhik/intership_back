@@ -3,20 +3,26 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    DB_USER: str
-    DB_PASSWORD: str
-    DB_HOST: str
-    DB_PORT: str
-    DB_NAME: str
-    PORT: str
-    HOST: str
-    RELOAD: str
+    DB_USER: str = "your_db_user"
+    DB_PASSWORD: str = "your_db_password "
+    DB_HOST: str = "localhost"
+    DB_PORT: int = 5432
+    DB_NAME: str = "your_db_name"
+    PORT: int = 8000
+    HOST: str = "0.0.0.0"
+    RELOAD: bool = True
+    STR_ALLOWED_ORIGINS: str = "*,example.url"
 
     @property
     def ASYNC_DATABASE_URL(self) -> str:
         return f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
 
-    model_config = ConfigDict(extra="ignore", env_file=".env", env_file_encoding="utf-8"
+    @property
+    def ALLOWED_ORIGINS_LIST(self) -> list:
+        return self.STR_ALLOWED_ORIGINS.split(",") 
+
+    model_config = ConfigDict(
+        extra="ignore", env_file=".env", env_file_encoding="utf-8"
     )
 
 
