@@ -5,11 +5,9 @@ from app.core.settings import config
 
 app = FastAPI()
 
-origins = [config.ALLOWED_ORIGINS]
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=config.ALLOWED_ORIGINS_LIST,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -11,11 +11,15 @@ class Settings(BaseSettings):
     PORT: int = 8000
     HOST: str = "0.0.0.0"
     RELOAD: bool = True
-    ALLOWED_ORIGINS: str = "*"
+    STR_ALLOWED_ORIGINS: str = "*,example.url"
 
     @property
     def ASYNC_DATABASE_URL(self) -> str:
         return f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
+
+    @property
+    def ALLOWED_ORIGINS_LIST(self) -> list:
+        return self.STR_ALLOWED_ORIGINS.split(",") 
 
     model_config = ConfigDict(
         extra="ignore", env_file=".env", env_file_encoding="utf-8"
