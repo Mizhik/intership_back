@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     PORT: int = 8000
     HOST: str = "0.0.0.0"
     RELOAD: bool = True
-    ALLOWED_ORIGINS: str = "*"
+    STR_ALLOWED_ORIGINS: str = "*,example.url"
 
     @property
     def ASYNC_DATABASE_URL(self) -> str:
@@ -24,6 +24,10 @@ class Settings(BaseSettings):
     @property
     def ASYNC_REDIS_URL(self) -> str:
         return f"redis://{self.REDIS_DOMAIN}:{self.REDIS_PORT}/0"
+
+    @property
+    def ALLOWED_ORIGINS_LIST(self) -> list:
+        return self.STR_ALLOWED_ORIGINS.split(",") 
 
     model_config = ConfigDict(
         extra="ignore", env_file=".env", env_file_encoding="utf-8"

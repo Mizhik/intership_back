@@ -1,6 +1,5 @@
 import contextlib
 
-from redis import asyncio as aioredis
 
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
@@ -38,13 +37,3 @@ sessionmanager = DatabaseSessionManager(config.ASYNC_DATABASE_URL)
 async def get_db():
     async with sessionmanager.session() as session:
         yield session
-
-
-async def get_redis_client():
-    redis = None
-    try:
-        redis = aioredis.ConnectionPool.from_url(config.ASYNC_REDIS_URL)
-        yield aioredis.Redis(connection_pool=redis)
-    finally:
-        if redis:
-            await redis.disconnect()

@@ -3,7 +3,7 @@ services:
   app:
     build: .
     ports:
-      - 8000:8000
+      - ${LOCAL_PORT}:${PORT}
     volumes:
       - .:/app
     depends_on:
@@ -13,12 +13,16 @@ services:
       - sh
       - -c
       - poetry run python -m main
+    networks:
+      - app-network
 
   redis:
     image: redis:alpine
     ports:
-      - "6379:6379"
-
+      - ${REDIS_LOCAL_PORT}:${REDIS_PORT}
+    networks:
+      - app-network
+      
   postgres:
     image: postgres:12-alpine
     environment:
@@ -27,6 +31,12 @@ services:
       POSTGRES_HOST: ${POSTGRES_HOST}
       POSTGRES_PORT: ${POSTGRES_PORT}
       POSTGRES_DB: ${POSTGRES_NAME}
-
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - ${POSTGRES_LOCAL_PORT}:${POSTGRES_PORT}
+    networks:
+      - app-network
+networks:
+  app-network:
+    driver: bridge
