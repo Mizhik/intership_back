@@ -29,6 +29,10 @@ class Settings(BaseSettings):
     def ALLOWED_ORIGINS_LIST(self) -> list:
         return self.STR_ALLOWED_ORIGINS.split(",") 
 
+    @property
+    def ALLOWED_ORIGINS_LIST(self) -> list:
+        return self.STR_ALLOWED_ORIGINS.split(",") 
+
     model_config = ConfigDict(
         extra="ignore", env_file=".env", env_file_encoding="utf-8"
     )
