@@ -37,14 +37,13 @@ uvicorn app.main:app --reload
 ## Вимоги
 Встановлений Docker на вашому комп'ютері. Інструкції щодо встановлення Docker можна знайти на офіційному сайті [Docker](https://docs.docker.com/engine/install/).
 
-## Створення Docker-образу
-Побудова Docker-образу
+## Запуск через Docker Compose
+Для запуску додатка разом із базами даних Redis та PostgreSQL використовуйте Docker Compose.
 
-```bash
-docker build -t example_name .
-```
+## Конфігурація Docker Compose
+Для запуску Docker Compose використвуйте файл docker-compose.yml та налаштування змінних для баз даних знаходяться у файлі **.env.sample**
 
-## Запуск Docker-контейнера
+* Побудова та запуск Docker-контейнера
 ```bash
-docker run -d -p 8000:8000 example_name
+docker-compose up -d --build
 ```

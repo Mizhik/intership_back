@@ -1,9 +1,13 @@
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
-from app.core.settings import config
 
+from fastapi import FastAPI 
+from fastapi.middleware.cors import CORSMiddleware
+
+from app.core.settings import config
+from app.routes import healthcheckers
 app = FastAPI()
+
+app.include_router(healthcheckers.router)
 
 app.add_middleware(
     CORSMiddleware,
@@ -12,11 +16,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-@app.get("/api/healthchecker")
-def root():
-    return {"status_code": 200, "detail": "ok", "result": "working"}
 
 
 if __name__ == "__main__":

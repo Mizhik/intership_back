@@ -3,11 +3,15 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    DB_USER: str = "your_db_user"
-    DB_PASSWORD: str = "your_db_password "
-    DB_HOST: str = "localhost"
-    DB_PORT: int = 5432
-    DB_NAME: str = "your_db_name"
+    POSTGRES_USER: str = "your_db_user"
+    POSTGRES_PASSWORD: str = "your_db_password "
+    POSTGRES_HOST: str = "localhost"
+    POSTGRES_PORT: int = 5432
+    POSTGRES_DB: str = "your_db_name"
+
+    REDIS_DOMAIN:str = "redis"
+    REDIS_PORT:int =6379
+
     PORT: int = 8000
     HOST: str = "0.0.0.0"
     RELOAD: bool = True
@@ -15,7 +19,15 @@ class Settings(BaseSettings):
 
     @property
     def ASYNC_DATABASE_URL(self) -> str:
-        return f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
+        return f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
+
+    @property
+    def ASYNC_REDIS_URL(self) -> str:
+        return f"redis://{self.REDIS_DOMAIN}:{self.REDIS_PORT}/0"
+
+    @property
+    def ALLOWED_ORIGINS_LIST(self) -> list:
+        return self.STR_ALLOWED_ORIGINS.split(",") 
 
     @property
     def ALLOWED_ORIGINS_LIST(self) -> list:
