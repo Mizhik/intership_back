@@ -1,21 +1,26 @@
 from fastapi import APIRouter, Depends, HTTPException
 
-from sqlalchemy import select, text
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.db import get_db
 from app.database.redis_connector import get_redis_client
 
+from logging_config import logger_decorator
+
 from redis import asyncio as aioredis
+
 router = APIRouter(prefix="/healthchecker", tags=["healthchecker"])
 
 
 @router.get("/")
+@logger_decorator
 def root():
     return {"status_code": 200, "detail": "ok", "result": "working"}
 
 
 @router.get("/db")
+@logger_decorator
 async def healthchecker(db: AsyncSession = Depends(get_db)):
     try:
         result = await db.execute(text("SELECT 1"))
@@ -31,6 +36,7 @@ async def healthchecker(db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/redis")
+@logger_decorator
 async def read_root(redis: aioredis.Redis = Depends(get_redis_client)):
     await redis.set("mykey", "value")
     value = await redis.get("mykey")
