@@ -47,3 +47,18 @@ uvicorn app.main:app --reload
 ```bash
 docker-compose up -d --build
 ```
+
+## Міграції
+
+Створення та застосування міграцій
+
+* Створення міграцій
+
+```bash
+alembic revision --autogenerate -m "Опис міграції"
+```
+* Застосування міграцій
+
+```bash
+alembic upgrade head
+```
