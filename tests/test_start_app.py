@@ -5,6 +5,6 @@ from main import app
 client = TestClient(app)
 
 def test_healthchecker():
-    response = client.get("/api/healthchecker")
+    response = client.get("/healthchecker/")
     assert response.status_code == 200
     assert response.json() == {"status_code": 200, "detail": "ok", "result": "working"}
