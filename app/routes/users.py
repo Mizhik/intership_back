@@ -1,3 +1,4 @@
+from typing import Optional
 from uuid import UUID
 from fastapi import APIRouter, Depends, status
 
@@ -19,33 +20,30 @@ async def get_user_service(db: AsyncSession = Depends(get_db)):
 
 @router.get("/", response_model=list[UserDetail])
 async def get_users(
-    offset: int = 0, limit: int = 100, user_service=Depends(get_user_service)
+    offset: Optional[int] = None,
+    limit: Optional[int] = None,
+    user_service=Depends(get_user_service),
 ):
-    users = await user_service.get_all_users(offset, limit)
-    return users
+    return await user_service.get_all_users(offset, limit)
 
 
 @router.get("/{user_id}", response_model=UserDetail)
 async def get_user(user_id: UUID, user_service=Depends(get_user_service)):
-    user = await user_service.get_one_user(user_id)
-    return user
+    return await user_service.get_one_user(user_id)
 
 
-@router.post("/create-user", response_model=UserDetail)
+@router.post("/", response_model=UserDetail)
 async def create_user(body: UserSchema, user_service=Depends(get_user_service)):
-    user = await user_service.create_user(body)
-    return user
+    return await user_service.create_user(body)
 
 
-@router.put("/update/{user_id}", response_model=UserDetail)
+@router.put("/{user_id}", response_model=UserDetail)
 async def update_user(
     user_id: UUID, body: UserUpdate, user_service=Depends(get_user_service)
 ):
-    user = await user_service.update_user(user_id, body)
-    return user
+    return await user_service.update_user(user_id, body)
 
 
-@router.delete("/delete/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_user(user_id: UUID, user_service=Depends(get_user_service)):
-    user = await user_service.delete_user(user_id)
-    return user
+    return await user_service.delete_user(user_id)
