@@ -12,7 +12,6 @@ from app.services.user import UserService
 router = APIRouter(prefix="/user", tags=["user"])
 
 
-# для окремого сервіса
 async def get_user_service(db: AsyncSession = Depends(get_db)):
     user_repository = UserRepository(db)
     return UserService(db, user_repository)
