@@ -18,6 +18,13 @@ class Settings(BaseSettings):
     RELOAD: bool = True
     STR_ALLOWED_ORIGINS: str = "*,example.url"
 
+    AUTH_SECRET_KEY: str = "your_secret_key"
+    AUTH_ALGORITHM: str = "algorithm"
+
+    DOMAIN: str ="your_domain"
+    API_AUDIENCE: str="api_audience"
+    ALGORITHM: str="algorithm"
+
     @property
     def ASYNC_DATABASE_URL(self) -> str:
         return f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
