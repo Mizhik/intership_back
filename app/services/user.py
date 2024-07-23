@@ -6,7 +6,6 @@ from app.repository.users import UserRepository
 from app.utils.hash_password import Hash
 
 class UserService:
-
     def __init__(self, db: AsyncSession, repository: UserRepository):
         self.db = db
         self.repository = repository

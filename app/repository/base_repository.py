@@ -3,7 +3,7 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import DeclarativeMeta
-from services.errors import ErrorNotFound
+from app.services.errors import ErrorNotFound
 
 ModelType = TypeVar("ModelType", bound=DeclarativeMeta)
 
