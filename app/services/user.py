@@ -23,7 +23,7 @@ class UserService:
 
     async def create_user(self, body: UserSchema) -> UserDetail:
         body_dict = body.model_dump()
-        body_dict["password"] = Hash.get_password_hash(body_dict["password"])
+        body_dict["password"] = await Hash.get_password_hash(body_dict["password"])
         user = await self.repository.create(body_dict)
         return user
 
@@ -35,7 +35,7 @@ class UserService:
             raise UserForbidden
 
         if body_dict.get("password"):
-            body_dict["password"] = Hash.get_password_hash(body_dict["password"])
+            body_dict["password"] = await Hash.get_password_hash(body_dict["password"])
         return await self.repository.update(user_id, body_dict)
 
     async def delete_user(self, user_id: UUID, current_user: User) -> None:
