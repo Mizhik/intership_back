@@ -6,7 +6,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.db import get_db
 from app.dtos.user import UserDetail, UserSchema, UserUpdate
+from app.entity.models import User
 from app.repository.users import UserRepository
+from app.services.auth import AuthService
 from app.services.user import UserService
 
 router = APIRouter(prefix="/user", tags=["user"])
@@ -38,11 +40,18 @@ async def create_user(body: UserSchema, user_service=Depends(get_user_service)):
 
 @router.put("/{user_id}", response_model=UserDetail)
 async def update_user(
-    user_id: UUID, body: UserUpdate, user_service=Depends(get_user_service)
+    user_id: UUID,
+    body: UserUpdate,
+    current_user: User = Depends(AuthService.get_current_user),
+    user_service=Depends(get_user_service),
 ):
-    return await user_service.update_user(user_id, body)
+    return await user_service.update_user(user_id, body, current_user)
 
 
 @router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_user(user_id: UUID, user_service=Depends(get_user_service)):
-    return await user_service.delete_user(user_id)
+async def delete_user(
+    user_id: UUID,
+    user_service=Depends(get_user_service),
+    current_user: User = Depends(AuthService.get_current_user),
+):
+    return await user_service.delete_user(user_id, current_user)
