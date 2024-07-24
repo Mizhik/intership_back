@@ -24,6 +24,7 @@ class Settings(BaseSettings):
     DOMAIN: str ="your_domain"
     API_AUDIENCE: str="api_audience"
     ALGORITHM: str="algorithm"
+    ISSUER: str = "ISSUER"
 
     @property
     def ASYNC_DATABASE_URL(self) -> str:
@@ -40,6 +41,10 @@ class Settings(BaseSettings):
     @property
     def ALLOWED_ORIGINS_LIST(self) -> list:
         return self.STR_ALLOWED_ORIGINS.split(",")
+
+    @property
+    def AUTH0_JWKS_URL(self)-> str:
+        return f"https://{config.DOMAIN}/.well-known/jwks.json"
 
     model_config = ConfigDict(
         extra="ignore", env_file=".env", env_file_encoding="utf-8"

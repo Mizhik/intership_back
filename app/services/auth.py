@@ -1,3 +1,4 @@
+from datetime import datetime
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import select
@@ -7,6 +8,7 @@ from app.database.db import get_db
 from app.dtos.user import UserSchema
 from app.entity.models import User
 from app.repository.users import UserRepository
+from app.services.user import UserService
 from app.utils.auth import Auth
 from app.utils.hash_password import Hash
 
@@ -25,13 +27,28 @@ class AuthService:
         db: AsyncSession = Depends(get_db),
     ):
         token = credentials.credentials
-        email = Auth.get_current_user_with_token(token)
+        email, token_source = await Auth.get_current_user_with_token(token)
+
         user = await db.execute(select(User).where(User.email == email))
         user = user.scalar_one_or_none()
+
         if user is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found"
-            )
+            if token_source == "own_service":
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="User not found",
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
+            elif token_source == "auth0":
+                user = User(
+                    username=email.split("@")[0],
+                    email=email,
+                    password=await Hash.get_password_hash(str(datetime.now())),
+                )
+                db.add(user)
+                await db.commit()
+                await db.refresh(user)
+
         return user
 
     async def get_user_by_email(self, email: str):
@@ -43,7 +60,7 @@ class AuthService:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT, detail="Account already exists"
             )
-        body.password = Hash.get_password_hash(body.password)
+        body.password = await Hash.get_password_hash(body.password)
         user = User(**body.model_dump())
         self.db.add(user)
         await self.db.commit()
@@ -56,11 +73,11 @@ class AuthService:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email"
             )
-        if not Hash.verify_password(body.password, user.password):
+        if not await Hash.verify_password(body.password, user.password):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid password"
             )
-        access_token = Auth.create_access_token(data={"sub": user.email})
+        access_token = await Auth.create_access_token(data={"sub": user.email})
         return {
             "access_token": access_token,
         }
