@@ -28,12 +28,13 @@ class Auth:
         return encoded_access_token
 
     @staticmethod
-    async def get_current_user_with_token(token: str) -> Optional[str]:
+    async def get_current_user_with_token(token: str) -> Optional[tuple[str, str]]:
         credentials_exception = HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Не удалось проверить учетные данные",
+            detail="Could not validate credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
         try:
             payload = jwt.decode(
                 token,
@@ -43,7 +44,7 @@ class Auth:
             email: str = payload.get("sub")
             if email is None:
                 raise credentials_exception
-            return email
+            return email, "own_service"
         except JWTError:
             try:
                 jwks_client = PyJWKClient(config.AUTH0_JWKS_URL)
@@ -59,6 +60,6 @@ class Auth:
                 email: str = payload.get("email")
                 if email is None:
                     raise credentials_exception
-                return email
+                return email, "auth0"
             except JWTError as e:
                 raise credentials_exception from e

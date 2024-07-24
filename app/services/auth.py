@@ -27,18 +27,28 @@ class AuthService:
         db: AsyncSession = Depends(get_db),
     ):
         token = credentials.credentials
-        email = await Auth.get_current_user_with_token(token)
+        email, token_source = await Auth.get_current_user_with_token(token)
+
         user = await db.execute(select(User).where(User.email == email))
         user = user.scalar_one_or_none()
+
         if user is None:
-            user = User(
-                username=email.split("@")[0],
-                email=email,
-                password=await Hash.get_password_hash(str(datetime.now())),
-            )
-            db.add(user)
-            await db.commit()
-            await db.refresh(user)
+            if token_source == "own_service":
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="User not found",
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
+            elif token_source == "auth0":
+                user = User(
+                    username=email.split("@")[0],
+                    email=email,
+                    password=await Hash.get_password_hash(str(datetime.now())),
+                )
+                db.add(user)
+                await db.commit()
+                await db.refresh(user)
+
         return user
 
     async def get_user_by_email(self, email: str):
