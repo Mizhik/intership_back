@@ -1,7 +1,9 @@
 from datetime import datetime
-from typing import Optional
-from pydantic import BaseModel, EmailStr, Field, model_validator
+from typing import List, Optional
+from pydantic import BaseModel, EmailStr, Field
 from uuid import UUID
+
+from app.dtos.company import CompanyDetail
 
 
 class UserSchema(BaseModel):
@@ -24,6 +26,7 @@ class UserDetail(BaseModel):
     id: UUID
     username: str
     email: EmailStr
+    owned_companies: List[CompanyDetail] = []
     create_at: datetime
     update_at: Optional[datetime] = None
 
