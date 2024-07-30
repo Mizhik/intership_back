@@ -16,7 +16,8 @@ class CompanyService:
     async def get_all_companies(
         self, offset: Optional[int] = None, limit: Optional[int] = None
     ) -> list[CompanyDetail]:
-        return await self.repository.get_many(offset, limit)    
+        companies = await self.repository.get_many(offset, limit)    
+        return [company for company in companies if company.is_visible == True]
 
     async def get_one_company(self, company_id: UUID) -> CompanyDetail:
         return await self.repository.get_one_or_404({"id": company_id})
@@ -30,15 +31,17 @@ class CompanyService:
         return company
 
     async def update_company(
-        self, user_id: UUID, company_id: UUID, body: CompanyUpdate, current_user: User
+        self, company_id: UUID, body: CompanyUpdate, current_user: User
     ) -> CompanyDetail:
         body_dict = body.model_dump()
-        if user_id != current_user.id:
+        company = await self.repository.get_one_or_404({"id":company_id})
+        if company.owner_id != current_user.id:
             raise UserForbidden
 
         return await self.repository.update(company_id, body_dict)
 
-    async def delete_company(self, user_id:UUID ,company_id: UUID, current_user: User) -> None:
-        if user_id != current_user.id:
+    async def delete_company(self, company_id: UUID, current_user: User) -> None:
+        company = await self.repository.get_one_or_404({"id": company_id})
+        if company.owner_id != current_user.id:
             raise UserForbidden
         return await self.repository.delete_res(company_id)

@@ -43,20 +43,18 @@ async def create_company(
 
 @router.put("/{company_id}", response_model=CompanyDetail)
 async def update_company(
-    user_id:UUID,
     company_id: UUID,
     body: CompanyUpdate,
     current_user: User = Depends(AuthService.get_current_user),
     company_service=Depends(get_company_service),
 ):
-    return await company_service.update_company(user_id, company_id, body, current_user)
+    return await company_service.update_company(company_id, body, current_user)
 
 
 @router.delete("/{company_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_user(
-    user_id: UUID,
+async def delete_company(
     company_id: UUID,
     company_service=Depends(get_company_service),
     current_user: User = Depends(AuthService.get_current_user),
 ):
-    return await company_service.delete_company(user_id, company_id, current_user)
+    return await company_service.delete_company(company_id, current_user)
