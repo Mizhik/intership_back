@@ -3,8 +3,10 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.dtos.company import CompanyDetail, CompanySchema, CompanyUpdate
+from app.entity.enums import ActionStatus
 from app.entity.models import User
 from app.repository.company import CompanyRepository
+from app.services.action import ActionService
 from app.services.errors import UserForbidden
 
 class CompanyService:
@@ -12,12 +14,12 @@ class CompanyService:
     def __init__(self, db: AsyncSession, repository: CompanyRepository):
         self.db = db
         self.repository = repository
-
+    
     async def check_owner_and_get_company(
         self, company_id: UUID, current_user: User  
     ) -> CompanyDetail:
         company = await self.repository.get_one_or_404({"id": company_id})
-        if company.owner_id != current_user.id:
+        if not await ActionService.is_user_owner(company_id,current_user.id,self.db):
             raise UserForbidden 
         return company
 
@@ -32,9 +34,9 @@ class CompanyService:
     async def create_company(
         self, body: CompanySchema, current_user: User
     ) -> CompanyDetail:
-        body_dict = body.model_dump()
-        body_dict["owner_id"] = current_user.id
-        company = await self.repository.create(body_dict)
+        company = await self.repository.create(body.model_dump())
+        action = dict(user_id=current_user.id, company_id=company.id, status = ActionStatus.OWNER)
+        await ActionService.create_action(action, self.db)
         return company
 
     async def update_company(
