@@ -1,11 +1,14 @@
 from typing import List, Optional
 from uuid import UUID
+
 from sqlalchemy import select
+from sqlalchemy.orm import joinedload
+
 from app.dtos.action import ActionDetail
 from app.dtos.user import UserDetail
 from app.entity.enums import ActionStatus
 from app.repository.base_repository import BaseRepository
-from app.entity.models import Action
+from app.entity.models import Action, User
 
 
 class ActionRepository(BaseRepository):
@@ -44,10 +47,23 @@ class ActionRepository(BaseRepository):
         offset: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> List[UserDetail]:
-        stmt = select(self.model).filter_by(
-            company_id=company_id, status=ActionStatus.MEMBER
+        stmt = (
+            select(User)
+            .join(self.model, self.model.user_id == User.id)
+            .filter(
+                self.model.company_id == company_id,
+                self.model.status == ActionStatus.MEMBER,
+            )
         )
         if offset is not None and limit is not None:
             stmt = stmt.offset(offset).limit(limit)
-        users = await self.db.execute(stmt)
-        return users.scalars().all()
+        results = await self.db.execute(stmt)
+        actions = results.scalars().all()
+        return actions
+
+    async def is_user_owner(self, company_id: UUID, user_id: UUID):
+        stmt = select(self.model).filter_by(
+            company_id=company_id, user_id=user_id, status=ActionStatus.OWNER
+        )
+        result = await self.db.execute(stmt)
+        return result.scalar_one_or_none()

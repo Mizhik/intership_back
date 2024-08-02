@@ -28,4 +28,4 @@ class Action(Base):
     company_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("companies.id"), nullable=False)
     status: Mapped[ActionStatus] = mapped_column('status', Enum(ActionStatus), default=None)
     user: Mapped["User"] = relationship("User", back_populates="actions")
-    company: Mapped["Company"] = relationship("Company", back_populates="actions",)
+    company: Mapped["Company"] = relationship("Company", back_populates="actions")
