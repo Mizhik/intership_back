@@ -19,11 +19,12 @@ class ActionRepository(BaseRepository):
         self, user_id: Optional[UUID] = None, company_id: Optional[UUID] = None
     ) -> List[ActionDetail]:
         stmt = select(self.model).filter_by(status=ActionStatus.REQUESTED_TO_JOIN)
-        if user_id:
-            stmt = stmt.filter_by(user_id=user_id)
-        elif company_id:
-            stmt = stmt.filter_by(company_id=company_id)
-        else:
+        stmt = (
+            stmt.filter_by(user_id=user_id)
+            if user_id
+            else stmt.filter_by(company_id=company_id) if company_id else None
+        )
+        if stmt is None:
             raise ValueError("Either user_id or company_id must be provided")
         result = await self.db.execute(stmt)
         return result.scalars().all()
@@ -32,11 +33,12 @@ class ActionRepository(BaseRepository):
         self, user_id: Optional[UUID] = None, company_id: Optional[UUID] = None
     ) -> List[ActionDetail]:
         stmt = select(self.model).filter_by(status=ActionStatus.INVITED)
-        if user_id:
-            stmt = stmt.filter_by(user_id=user_id)
-        elif company_id:
-            stmt = stmt.filter_by(company_id=company_id)
-        else:
+        stmt = (
+            stmt.filter_by(user_id=user_id)
+            if user_id
+            else stmt.filter_by(company_id=company_id) if company_id else None
+        )
+        if stmt is None:
             raise ValueError("Either user_id or company_id must be provided")
         result = await self.db.execute(stmt)
         return result.scalars().all()
