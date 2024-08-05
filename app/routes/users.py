@@ -76,17 +76,3 @@ async def delete_user(
     current_user: User = Depends(AuthService.get_current_user),
 ):
     return await user_service.delete_user(user_id, current_user)
-
-
-@router.get("/companies/{company_id}/members")
-async def view_users_in_company(
-    company_id: UUID,
-    offset: Optional[int] = None,
-    limit: Optional[int] = None,
-    admin: Optional[bool] = False,
-    current_id: User = Depends(AuthService.get_current_user),
-    action_service: UserService = Depends(get_user_service),
-)->list[UserDetail]:
-    return await action_service.get_users_in_company(
-        company_id, current_id, offset, limit, admin
-    )
