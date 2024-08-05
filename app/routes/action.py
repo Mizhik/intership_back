@@ -138,3 +138,23 @@ async def leave_company(
     action_service=Depends(get_action_service),
 ):
     return await action_service.leave_company(company_id, current_user)
+
+
+@router.patch("/append-admin/{user_id}/in/{company_id}", response_model=ActionDetail)
+async def create_admin(
+    user_id: UUID,
+    company_id: UUID,
+    current_user: User = Depends(AuthService.get_current_user),
+    action_service=Depends(get_action_service),
+):
+    return await action_service.create_admin(company_id, user_id, current_user)
+
+
+@router.patch("/remove-admin/{user_id}/from/{company_id}", response_model=ActionDetail)
+async def remove_admin(
+    user_id: UUID,
+    company_id: UUID,
+    current_user: User = Depends(AuthService.get_current_user),
+    action_service=Depends(get_action_service),
+):
+    return await action_service.remove_admin(company_id, user_id, current_user)

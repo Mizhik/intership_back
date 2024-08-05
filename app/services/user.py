@@ -51,17 +51,17 @@ class UserService:
             raise UserForbidden
         return await self.repository.delete_res(user_id)
 
-    # general
     async def get_users_in_company(
         self,
         company_id: UUID,
         current_user: User,
         offset: Optional[int],
         limit: Optional[int],
+        admin: Optional[bool],
     ) -> list[UserDetail]:
-        await self.action_repository.is_user_owner(company_id, current_user.id)
+        await self.action_repository.is_user_owner_or_admin(company_id, current_user.id)
         users = await self.action_repository.get_users_by_company(
-            company_id, offset, limit
+            company_id, offset, limit, admin
         )
         return users
 

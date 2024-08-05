@@ -22,7 +22,9 @@ class CompanyService:
         self, company_id: UUID, current_user: User  
     ) -> CompanyDetail:
         company = await self.repository.get_one_or_404({"id": company_id})
-        if not await ActionService.is_user_owner(company_id,current_user.id,self.db):
+        if not await self.action_repository.is_user_owner_or_admin(
+            company_id, current_user.id
+        ):
             raise UserForbidden 
         return company
 
@@ -60,7 +62,7 @@ class CompanyService:
     async def get_company_invitations_to_users(
         self, company_id: UUID, current_user: User
     ) -> list[ActionDetail]:
-        if not await self.action_repository.is_user_owner(
+        if not await self.action_repository.is_user_owner_or_admin(
             company_id, current_user.id
         ):
             raise UserForbidden
@@ -69,7 +71,7 @@ class CompanyService:
     async def get_company_requests_to_users(
         self, company_id: UUID, current_user: User
     ) -> list[ActionDetail]:
-        if not await self.action_repository.is_user_owner(
+        if not await self.action_repository.is_user_owner_or_admin(
             company_id, current_user.id
         ):
             raise UserForbidden

@@ -83,12 +83,10 @@ async def view_users_in_company(
     company_id: UUID,
     offset: Optional[int] = None,
     limit: Optional[int] = None,
+    admin: Optional[bool] = False,
     current_id: User = Depends(AuthService.get_current_user),
     action_service: UserService = Depends(get_user_service),
 )->list[UserDetail]:
     return await action_service.get_users_in_company(
-        company_id,
-        current_id,
-        offset,
-        limit,
+        company_id, current_id, offset, limit, admin
     )

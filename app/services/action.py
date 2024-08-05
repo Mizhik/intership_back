@@ -31,7 +31,7 @@ class ActionService:
     async def send_invitation(
         self, company_id: UUID, user_id: UUID, current_user: User
     ) -> ActionDetail:
-        if not await self.repository.is_user_owner(company_id, current_user.id):
+        if not await self.repository.is_user_owner_or_admin(company_id, current_user.id):
             raise UserForbidden
 
         user_action = await self.repository.get_one(
@@ -49,8 +49,8 @@ class ActionService:
     async def cancel_invitation(
         self, company_id: UUID, invitation_id: UUID, current_user: User
     ) -> ActionDetail:
-        if not await self.repository.is_user_owner(
-            company_id, current_user.id, self.db
+        if not await self.repository.is_user_owner_or_admin(
+            company_id, current_user.id
         ):
             raise UserForbidden
 
@@ -63,8 +63,8 @@ class ActionService:
     async def accept_invitation(
         self, company_id: UUID, invitation_id: UUID, current_user: User
     ) -> ActionDetail:
-        if not await self.repository.is_user_owner(
-            company_id, current_user.id, self.db
+        if not await self.repository.is_user_owner_or_admin(
+            company_id, current_user.id
         ):
             raise UserForbidden
         action = await self.repository.get_one_or_404({"id": invitation_id})
@@ -75,8 +75,8 @@ class ActionService:
     async def decline_invitation(
         self, company_id: UUID, invitation_id: UUID, current_user: User
     ) -> ActionDetail:
-        if not await self.repository.is_user_owner(
-            company_id, current_user.id, self.db
+        if not await self.repository.is_user_owner_or_admin(
+            company_id, current_user.id
         ):
             raise UserForbidden
         action = await self.repository.get_one_or_404({"id": invitation_id})
@@ -142,8 +142,8 @@ class ActionService:
     async def remove_user(
         self, user_id: UUID, company_id: UUID, current_user: User
     ) -> ActionDetail:
-        if not await self.repository.is_user_owner(
-            company_id, current_user.id, self.db
+        if not await self.repository.is_user_owner_or_admin(
+            company_id, current_user.id
         ):
             raise UserForbidden
 
@@ -160,4 +160,29 @@ class ActionService:
         await leave_company_status_msg(user_action)
         return await self.repository.update(
             user_action.id, {"status": ActionStatus.LEFT}
+        )
+
+    async def create_admin(
+        self, company_id: UUID, user_id: UUID, current_user: User
+    ) -> ActionDetail:
+        if not await self.repository.is_user_owner_or_admin(company_id, current_user.id):
+            raise UserForbidden
+        user_action = await self.repository.get_one_or_404(
+            {"user_id": user_id, "status": ActionStatus.MEMBER}
+        )
+        return await self.repository.update(
+            user_action.id, {"status": ActionStatus.ADMIN}
+        )
+
+    async def remove_admin(
+        self, company_id: UUID, user_id: UUID, current_user: User
+    ) -> ActionDetail:
+        if not await self.repository.is_user_owner_or_admin(company_id, current_user.id):
+            raise UserForbidden
+        user_action = await self.repository.get_one_or_404(
+            {"user_id": user_id, "status": ActionStatus.ADMIN}
+        )
+
+        return await self.repository.update(
+            user_action.id, {"status": ActionStatus.MEMBER}
         )
