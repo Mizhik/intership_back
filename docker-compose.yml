@@ -22,7 +22,7 @@ services:
       - ${REDIS_LOCAL_PORT}:${REDIS_PORT}
     networks:
       - app-network
-      
+
   postgres:
     image: postgres:12-alpine
     environment:

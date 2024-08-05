@@ -1,6 +1,5 @@
-from datetime import datetime
 from typing import Optional
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, Field
 from uuid import UUID
 
 class CompanySchema(BaseModel):
@@ -18,7 +17,6 @@ class CompanyDetail(BaseModel):
     name:str
     description:str
     is_visible:bool
-    owner_id: UUID
 
     class Config:
         from_attributes = True

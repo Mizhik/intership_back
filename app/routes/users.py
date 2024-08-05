@@ -5,8 +5,10 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.db import get_db
+from app.dtos.action import ActionDetail
 from app.dtos.user import UserDetail, UserSchema, UserUpdate
 from app.entity.models import User
+from app.repository.action import ActionRepository
 from app.repository.users import UserRepository
 from app.services.auth import AuthService
 from app.services.user import UserService
@@ -16,7 +18,26 @@ router = APIRouter(prefix="/user", tags=["user"])
 
 async def get_user_service(db: AsyncSession = Depends(get_db)):
     user_repository = UserRepository(db)
-    return UserService(db, user_repository)
+    action_repository = ActionRepository(db)
+    return UserService(db, user_repository, action_repository)
+
+
+# 11. Перегляд запитів на приєднання користувачем
+@router.get("/requests", response_model=list[ActionDetail])
+async def view_user_requests(
+    current_user: User = Depends(AuthService.get_current_user),
+    action_service: UserService = Depends(get_user_service),
+):
+    return await action_service.get_users_requests_to_companies(current_user.id)
+
+
+# 12. Перегляд запрошень користувачем
+@router.get("/invitations", response_model=list[ActionDetail])
+async def view_user_invitations(
+    current_user: User = Depends(AuthService.get_current_user),
+    action_service: UserService = Depends(get_user_service),
+):
+    return await action_service.get_users_invitations_from_companies(current_user.id)
 
 
 @router.get("/", response_model=list[UserDetail])
