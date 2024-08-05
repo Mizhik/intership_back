@@ -7,7 +7,7 @@ from app.entity.enums import ActionStatus
 from app.entity.models import User
 from app.repository.action import ActionRepository
 from app.services.errors import UserForbidden
-from app.services.message_for_actions import (
+from app.utils.message_for_actions import (
     accept_invitation_status_msg,
     accept_request_status_msg,
     cancel_invitation_status_msg,

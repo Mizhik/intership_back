@@ -6,12 +6,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database.db import get_db
 from app.dtos.action import ActionDetail
 from app.dtos.company import CompanyDetail, CompanySchema, CompanyUpdate
+from app.dtos.user import UserDetail
 from app.entity.models import User
 from app.repository.action import ActionRepository
 from app.repository.company import CompanyRepository
 from app.services.action import ActionService
 from app.services.auth import AuthService
 from app.services.company import CompanyService
+from app.services.user import UserService
 
 router = APIRouter(prefix="/company", tags=["company"])
 
@@ -84,3 +86,19 @@ async def view_requests(
     action_service: CompanyService = Depends(get_company_service),
 ):
     return await action_service.get_company_requests_to_users(company_id, current_user)
+
+
+@router.get("/companies/{company_id}/members")
+async def view_users_in_company(
+    company_id: UUID,
+    offset: Optional[int] = None,
+    limit: Optional[int] = None,
+    current_id: User = Depends(AuthService.get_current_user),
+    action_service: UserService = Depends(get_company_service),
+) -> list[UserDetail]:
+    return await action_service.get_users_in_company(
+        company_id,
+        current_id,
+        offset,
+        limit,
+    )
