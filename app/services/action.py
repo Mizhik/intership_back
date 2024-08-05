@@ -12,9 +12,11 @@ from app.utils.message_for_actions import (
     accept_request_status_msg,
     cancel_invitation_status_msg,
     cancel_request_status_msg,
+    create_admin_status_msg,
     decline_invitation_status_msg,
     decline_request_status_msg,
     leave_company_status_msg,
+    remove_admin_status_msg,
     remove_user_status_msg,
     request_to_join_status_msg,
     send_invitation_status_msg,
@@ -31,12 +33,16 @@ class ActionService:
     async def send_invitation(
         self, company_id: UUID, user_id: UUID, current_user: User
     ) -> ActionDetail:
-        if not await self.repository.is_user_owner(company_id, current_user.id):
+        if not await self.repository.is_user_owner_or_admin(
+            company_id, current_user.id
+        ):
             raise UserForbidden
 
         user_action = await self.repository.get_one(
             user_id=user_id, company_id=company_id
         )
+
+        await send_invitation_status_msg(user_action)
 
         if not user_action:
             action = dict(
@@ -44,46 +50,48 @@ class ActionService:
             )
             return await self.repository.create(action)
 
-        await send_invitation_status_msg(user_action)
-
     async def cancel_invitation(
-        self, company_id: UUID, invitation_id: UUID, current_user: User
+        self, invitation_id: UUID, current_user: User
     ) -> ActionDetail:
-        if not await self.repository.is_user_owner(
-            company_id, current_user.id, self.db
+        action = await self.repository.get_one_or_404({"id": invitation_id})
+
+        if not await self.repository.is_user_owner_or_admin(
+            action.company_id, current_user.id
         ):
             raise UserForbidden
 
-        action = await self.repository.get_one_or_404({"id": invitation_id})
         await cancel_invitation_status_msg(action)
         return await self.repository.update(
             action.id, {"status": ActionStatus.INVITATION_CANCELLED}
         )
 
-    async def accept_invitation(
-        self, company_id: UUID, invitation_id: UUID, current_user: User
+    async def accept_request(
+        self, request_id: UUID, current_user: User
     ) -> ActionDetail:
-        if not await self.repository.is_user_owner(
-            company_id, current_user.id, self.db
+        action = await self.repository.get_one_or_404({"id": request_id})
+
+        if not await self.repository.is_user_owner_or_admin(
+            action.company_id, current_user.id
         ):
             raise UserForbidden
-        action = await self.repository.get_one_or_404({"id": invitation_id})
 
         await accept_invitation_status_msg(action)
         return await self.repository.update(action.id, {"status": ActionStatus.MEMBER})
 
-    async def decline_invitation(
-        self, company_id: UUID, invitation_id: UUID, current_user: User
+    async def decline_request(
+        self, invitation_id: UUID, current_user: User
     ) -> ActionDetail:
-        if not await self.repository.is_user_owner(
-            company_id, current_user.id, self.db
+        action = await self.repository.get_one_or_404({"id": invitation_id})
+
+        if not await self.repository.is_user_owner_or_admin(
+            action.company_id, current_user.id
         ):
             raise UserForbidden
-        action = await self.repository.get_one_or_404({"id": invitation_id})
+
         await decline_invitation_status_msg(action)
 
         return await self.repository.update(
-            action.id, {"status": ActionStatus.INVITATION_DECLINED}
+            action.id, {"status": ActionStatus.REQUEST_DECLINED}
         )
 
     # U to C
@@ -116,17 +124,17 @@ class ActionService:
             action.id, {"status": ActionStatus.REQUEST_CANCELLED}
         )
 
-    async def accept_request(
-        self, request_id: UUID, current_user: User
+    async def accept_invitation(
+        self, invitation_id: UUID, current_user: User
     ) -> ActionDetail:
         action = await self.repository.get_one_or_404(
-            {"id": request_id, "user_id": current_user.id}
+            {"id": invitation_id, "user_id": current_user.id}
         )
         await accept_request_status_msg(action)
 
         return await self.repository.update(action.id, {"status": ActionStatus.MEMBER})
 
-    async def decline_request(
+    async def decline_invitation(
         self, request_id: UUID, current_user: User
     ) -> ActionDetail:
         action = await self.repository.get_one_or_404(
@@ -136,14 +144,14 @@ class ActionService:
         await decline_request_status_msg(action)
 
         return await self.repository.update(
-            action.id, {"status": ActionStatus.REQUEST_DECLINED}
+            action.id, {"status": ActionStatus.INVITATION_DECLINED}
         )
 
     async def remove_user(
         self, user_id: UUID, company_id: UUID, current_user: User
     ) -> ActionDetail:
-        if not await self.repository.is_user_owner(
-            company_id, current_user.id, self.db
+        if not await self.repository.is_user_owner_or_admin(
+            company_id, current_user.id
         ):
             raise UserForbidden
 
@@ -160,4 +168,34 @@ class ActionService:
         await leave_company_status_msg(user_action)
         return await self.repository.update(
             user_action.id, {"status": ActionStatus.LEFT}
+        )
+
+    async def create_admin(
+        self, company_id: UUID, user_id: UUID, current_user: User
+    ) -> ActionDetail:
+        if not await self.repository.is_user_owner_or_admin(
+            company_id, current_user.id
+        ):
+            raise UserForbidden
+        user_action = await self.repository.get_one(
+            user_id=user_id, company_id=company_id
+        )
+        await create_admin_status_msg(user_action)
+        return await self.repository.update(
+            user_action.id, {"status": ActionStatus.ADMIN}
+        )
+
+    async def remove_admin(
+        self, company_id: UUID, user_id: UUID, current_user: User
+    ) -> ActionDetail:
+        if not await self.repository.is_user_owner_or_admin(
+            company_id, current_user.id
+        ):
+            raise UserForbidden
+        user_action = await self.repository.get_one(
+            user_id=user_id, company_id=company_id
+        )
+        await remove_admin_status_msg(user_action)
+        return await self.repository.update(
+            user_action.id, {"status": ActionStatus.MEMBER}
         )

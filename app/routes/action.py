@@ -20,7 +20,7 @@ async def get_action_service(db: AsyncSession = Depends(get_db)):
     return ActionService(db, user_repository)
 
 
-# 1. Відправка запрошень
+# C to U
 @router.post("/invite/{user_id}/to/{company_id}", response_model=ActionDetail)
 async def send_invitation(
     company_id: UUID,
@@ -31,55 +31,37 @@ async def send_invitation(
     return await action_service.send_invitation(company_id, user_id, current_user)
 
 
-# 2. Скасування запрошення
 @router.patch(
-    "/cancel/{invitation_id}/for/{company_id}",
+    "/cancel-company/{invitation_id}/",
     response_model=ActionDetail,
 )
 async def cancel_invitation(
-    company_id: UUID,
     invitation_id: UUID,
     current_user: User = Depends(AuthService.get_current_user),
     action_service=Depends(get_action_service),
 ):
-    return await action_service.cancel_invitation(
-        company_id, invitation_id, current_user
-    )
+    return await action_service.cancel_invitation(invitation_id, current_user)
 
 
-# 3. Прийняття запрошення
-@router.patch(
-    "/accept/{invitation_id}/for{company_id}",
-    response_model=ActionDetail,
-)
-async def accept_invitation(
-    company_id: UUID,
-    invitation_id: UUID,
+@router.patch("/accept-users/{request_id}/", response_model=ActionDetail)
+async def accept_request(
+    request_id: UUID,
     current_user: User = Depends(AuthService.get_current_user),
     action_service=Depends(get_action_service),
 ):
-    return await action_service.accept_invitation(
-        company_id, invitation_id, current_user
-    )
+    return await action_service.accept_request(request_id, current_user)
 
 
-# 4. Відхилення запрошення
-@router.patch(
-    "/decline/{invitation_id}/for{company_id}",
-    response_model=ActionDetail,
-)
-async def decline_invitation(
-    company_id: UUID,
-    invitation_id: UUID,
+@router.patch("/decline-users/{request_id}/", response_model=ActionDetail)
+async def decline_request(
+    request_id: UUID,
     current_user: User = Depends(AuthService.get_current_user),
     action_service=Depends(get_action_service),
 ):
-    return await action_service.decline_invitation(
-        company_id, invitation_id, current_user
-    )
+    return await action_service.decline_request(request_id, current_user)
 
 
-# 5. Запит на приєднання до компанії
+# U to C
 @router.post("/request/{company_id}", response_model=ActionDetail)
 async def request_to_join(
     company_id: UUID,
@@ -89,7 +71,30 @@ async def request_to_join(
     return await action_service.request_to_join(company_id, current_user)
 
 
-# 6. Скасування запиту на приєднання
+@router.patch(
+    "/accept/{invitation_id}/",
+    response_model=ActionDetail,
+)
+async def accept_invitation(
+    invitation_id: UUID,
+    current_user: User = Depends(AuthService.get_current_user),
+    action_service=Depends(get_action_service),
+):
+    return await action_service.accept_invitation(invitation_id, current_user)
+
+
+@router.patch(
+    "/decline/{invitation_id}/",
+    response_model=ActionDetail,
+)
+async def decline_invitation(
+    invitation_id: UUID,
+    current_user: User = Depends(AuthService.get_current_user),
+    action_service=Depends(get_action_service),
+):
+    return await action_service.decline_invitation(invitation_id, current_user)
+
+
 @router.patch("/cancel/{request_id}/", response_model=ActionDetail)
 async def cancel_request(
     request_id: UUID,
@@ -97,26 +102,6 @@ async def cancel_request(
     action_service=Depends(get_action_service),
 ):
     return await action_service.cancel_request(request_id, current_user)
-
-
-# 7. Прийняття запиту на приєднання
-@router.patch("/accept/{request_id}/", response_model=ActionDetail)
-async def accept_request(
-    request_id: UUID,
-    current_user: User = Depends(AuthService.get_current_user),
-    action_service=Depends(get_action_service),
-):
-    return await action_service.accept_request(request_id, current_user)
-
-
-# 8. Відхилення запиту на приєднання
-@router.patch("/decline/{request_id}/", response_model=ActionDetail)
-async def decline_request(
-    request_id: UUID,
-    current_user: User = Depends(AuthService.get_current_user),
-    action_service=Depends(get_action_service),
-):
-    return await action_service.decline_request(request_id, current_user)
 
 
 # 9. Видалення користувача з компанії
@@ -138,3 +123,23 @@ async def leave_company(
     action_service=Depends(get_action_service),
 ):
     return await action_service.leave_company(company_id, current_user)
+
+
+@router.patch("/append-admin/{user_id}/in/{company_id}", response_model=ActionDetail)
+async def create_admin(
+    user_id: UUID,
+    company_id: UUID,
+    current_user: User = Depends(AuthService.get_current_user),
+    action_service=Depends(get_action_service),
+):
+    return await action_service.create_admin(company_id, user_id, current_user)
+
+
+@router.patch("/remove-admin/{user_id}/from/{company_id}", response_model=ActionDetail)
+async def remove_admin(
+    user_id: UUID,
+    company_id: UUID,
+    current_user: User = Depends(AuthService.get_current_user),
+    action_service=Depends(get_action_service),
+):
+    return await action_service.remove_admin(company_id, user_id, current_user)

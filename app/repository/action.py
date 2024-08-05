@@ -43,29 +43,39 @@ class ActionRepository(BaseRepository):
         result = await self.db.execute(stmt)
         return result.scalars().all()
 
+
     async def get_users_by_company(
         self,
         company_id: UUID,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
+        admin: Optional[bool] = False,
     ) -> List[UserDetail]:
         stmt = (
             select(User)
             .join(self.model, self.model.user_id == User.id)
             .filter(
                 self.model.company_id == company_id,
-                self.model.status == ActionStatus.MEMBER,
             )
         )
+
+        if admin:
+            stmt = stmt.filter(self.model.status == ActionStatus.ADMIN)
+        else:
+            stmt = stmt.filter(self.model.status == ActionStatus.MEMBER)
+
         if offset is not None and limit is not None:
             stmt = stmt.offset(offset).limit(limit)
-        results = await self.db.execute(stmt)
-        actions = results.scalars().all()
-        return actions
 
-    async def is_user_owner(self, company_id: UUID, user_id: UUID):
-        stmt = select(self.model).filter_by(
-            company_id=company_id, user_id=user_id, status=ActionStatus.OWNER
+        results = await self.db.execute(stmt)
+        users = results.scalars().all()
+        return users
+
+    async def is_user_owner_or_admin(self, company_id: UUID, user_id: UUID):
+        stmt = select(self.model).filter(
+            (self.model.company_id == company_id)
+            & (self.model.user_id == user_id)
+            & (self.model.status.in_((ActionStatus.OWNER, ActionStatus.ADMIN)))
         )
         result = await self.db.execute(stmt)
         return result.scalar_one_or_none()
