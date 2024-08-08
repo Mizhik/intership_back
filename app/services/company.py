@@ -41,7 +41,7 @@ class CompanyService:
     ) -> CompanyDetail:
         company = await self.repository.create(body.model_dump())
         await self.action_repository.create(
-            action=dict(
+            dict(
                 user_id=current_user.id,
                 company_id=company.id,
                 status=ActionStatus.OWNER,

@@ -10,7 +10,6 @@ from app.dtos.user import UserDetail
 from app.entity.models import User
 from app.repository.action import ActionRepository
 from app.repository.company import CompanyRepository
-from app.services.action import ActionService
 from app.services.auth import AuthService
 from app.services.company import CompanyService
 from app.services.user import UserService
