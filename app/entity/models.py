@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Enum, ForeignKey, String, Text
+from sqlalchemy import Boolean, Enum, ForeignKey, Integer, String, Text
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.entity.base_models import Base
@@ -21,6 +21,7 @@ class Company(Base):
     description: Mapped[str] = mapped_column(Text, nullable=False)
     is_visible: Mapped[bool] = mapped_column(Boolean, default=True)
     actions: Mapped[list["Action"]] = relationship("Action", back_populates='company', lazy="selectin")
+    quizzes: Mapped[list["Quiz"]] = relationship("Quiz", back_populates="company", cascade="all, delete-orphan")
 
 class Action(Base):
     __tablename__ = "actions"
@@ -29,3 +30,26 @@ class Action(Base):
     status: Mapped[ActionStatus] = mapped_column('status', Enum(ActionStatus), default=None)
     user: Mapped["User"] = relationship("User", back_populates="actions")
     company: Mapped["Company"] = relationship("Company", back_populates="actions")
+
+class Quiz(Base):
+    __tablename__ = "quizzes"
+    title: Mapped[str] = mapped_column(String(250), nullable=False)
+    description: Mapped[str] = mapped_column(Text, nullable=False)
+    frequency: Mapped[int] = mapped_column(Integer, default=0)
+    company_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("companies.id"), nullable=False)
+    company: Mapped["Company"] = relationship("Company", back_populates="quizzes", lazy="selectin")
+    questions: Mapped[list["Question"]] = relationship("Question", back_populates="quiz", lazy="joined", cascade="all, delete-orphan")
+
+class Question(Base):
+    __tablename__ = "questions"
+    quiz_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("quizzes.id", ondelete="CASCADE"), nullable = False)
+    title:Mapped[str] = mapped_column(String(200), nullable=False)
+    quiz: Mapped["Quiz"] = relationship("Quiz", back_populates="questions", lazy="selectin")
+    answers: Mapped[list["Answer"]] = relationship("Answer", back_populates="question", lazy="joined", cascade="all, delete-orphan")
+
+class Answer(Base):
+    __tablename__ = "answers"
+    question_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("questions.id", ondelete="CASCADE"),nullable=False)
+    title: Mapped[str] = mapped_column(String(200), nullable=False)
+    is_correct: Mapped[bool] = mapped_column(Boolean, default=False)
+    question: Mapped["Question"] = relationship("Question", back_populates="answers", lazy="joined")
