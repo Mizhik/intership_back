@@ -43,7 +43,6 @@ class ActionRepository(BaseRepository):
         result = await self.db.execute(stmt)
         return result.scalars().all()
 
-
     async def get_users_by_company(
         self,
         company_id: UUID,
@@ -76,6 +75,15 @@ class ActionRepository(BaseRepository):
             (self.model.company_id == company_id)
             & (self.model.user_id == user_id)
             & (self.model.status.in_((ActionStatus.OWNER, ActionStatus.ADMIN)))
+        )
+        result = await self.db.execute(stmt)
+        return result.scalar_one_or_none()
+
+    async def is_user_member(self, company_id: UUID, user_id: UUID):
+        stmt = select(self.model).filter(
+            (self.model.company_id == company_id)
+            & (self.model.user_id == user_id)
+            & (self.model.status == ActionStatus.MEMBER)
         )
         result = await self.db.execute(stmt)
         return result.scalar_one_or_none()
