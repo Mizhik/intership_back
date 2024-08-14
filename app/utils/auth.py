@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from typing import Optional
 from fastapi import HTTPException, status
-from jose import jwt, JWTError 
+from jose import jwt, JWTError, ExpiredSignatureError
 from jwt import PyJWKClient
 from fastapi.security import HTTPBearer, OAuth2PasswordBearer
 from app.core.settings import config
@@ -41,10 +41,17 @@ class Auth:
                 config.AUTH_SECRET_KEY,
                 algorithms=[config.AUTH_ALGORITHM],
             )
-            email: str = payload.get("sub")
+            email = payload.get("sub")
             if email is None:
                 raise credentials_exception
             return email, "own_service"
+
+        except ExpiredSignatureError:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Token has expired",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
         except JWTError:
             try:
                 jwks_client = PyJWKClient(config.AUTH0_JWKS_URL)
@@ -57,7 +64,7 @@ class Auth:
                     issuer=config.ISSUER,
                     audience=config.API_AUDIENCE,
                 )
-                email: str = payload.get("email")
+                email = payload.get("email")
                 if email is None:
                     raise credentials_exception
                 return email, "auth0"

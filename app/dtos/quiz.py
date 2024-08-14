@@ -74,7 +74,9 @@ class QuizUpdate(BaseModel):
 class AnswerResponseSchema(BaseModel):
     id: UUID
     title: str
-    is_correct: bool
+
+    class Config:
+        from_attributes = True
 
 
 class QuestionResponseSchema(BaseModel):
@@ -82,9 +84,15 @@ class QuestionResponseSchema(BaseModel):
     title: str
     answers: List[AnswerResponseSchema]
 
+    class Config:
+        from_attributes = True
+
 
 class QuizResponseSchema(BaseModel):
     id: UUID
     title: str
     description: str
     questions: List[QuestionResponseSchema]
+
+    class Config:
+        from_attributes = True
