@@ -9,6 +9,7 @@ from app.repository.question import QuestionRepository
 from app.repository.quiz import QuizRepository
 from app.repository.result import ResultRepository
 from app.services.errors import UserForbidden
+from app.utils.redis import Redis
 
 
 class ResultService:
@@ -49,16 +50,29 @@ class ResultService:
             correct_answers[question.id] = [answer.id for answer in answers]
 
         correct_answers_count = 0
+        detailed_answers = []
         for user_answer in answers_input:
             question_id = user_answer.question_id
-            user_answer_ids = user_answer.answer_id
+            user_answer_id = user_answer.answer_id
 
-            if set(user_answer_ids) == set(correct_answers.get(question_id, [])):
+            is_correct = set(user_answer_id) == set(
+                correct_answers.get(question_id, [])
+            )
+            if is_correct:
                 correct_answers_count += 1
 
+            question_name = await self.question_repository.get_one(id=question_id)
+            answer_name = await self.answer_repository.get_many_by_list(user_answer_id)
+            detailed_answers.append(
+                {
+                    "question": question_name.title,
+                    "answer": answer_name,
+                    "is_correct": is_correct,
+                }
+            )
         score_percentage = (correct_answers_count / len(questions)) * 100
         await self.quiz_repository.update(quiz_id, {"frequency": quiz.frequency + 1})
-        return await self.repository.create(
+        result = await self.repository.create(
             {
                 "user_id": user_id,
                 "quiz_id": quiz_id,
@@ -67,6 +81,8 @@ class ResultService:
                 "score_percentage": score_percentage,
             }
         )
+        await Redis.save_results_to_redis(result, detailed_answers)
+        return result
 
     async def get_user_average_in_company(
         self, user_id: UUID, company_id: UUID, current_user: User
@@ -94,7 +110,7 @@ class ResultService:
     async def get_user_average_across_system(
         self, user_id: UUID, current_user: User
     ) -> float:
-        if (user_id != current_user.id):
+        if user_id != current_user.id:
             raise UserForbidden
         results = await self.repository.get_results_by_user(user_id)
         if not results:
