@@ -1,12 +1,14 @@
 import json
 from fastapi import HTTPException
-
+from fastapi.responses import FileResponse
+import json
+import csv
+import tempfile
 from app.entity.models import Result
 from app.database.redis_connector import get_redis_client
 
 
 class Redis:
-
     @staticmethod
     async def save_data_to_redis_db(key, value):
         redis = await get_redis_client()
@@ -14,18 +16,18 @@ class Redis:
         await redis.expire(key, 48 * 3600)
         await redis.close()
 
-    @staticmethod
-    async def get_data_from_redis_db(key):
-        redis = await get_redis_client()
-        result = await redis.get(key)
-        await redis.close()
-        return result
 
     @staticmethod
-    async def delete_data_from_redis_db(key):
+    async def get_data_by_pattern(pattern: str):
         redis = await get_redis_client()
-        await redis.delete(key)
+        data = []
+        keys = await redis.keys(pattern)
+        for key in keys:
+            value = await redis.get(key)
+            if value:
+                data.append(json.loads(value))
         await redis.close()
+        return data
 
     @staticmethod
     async def save_results_to_redis(quiz_results: Result, answers_input: list[dict]):
@@ -55,4 +57,56 @@ class Redis:
         except Exception as e:
             raise HTTPException(
                 status_code=409, detail=f"Can't save data to redis: {str(e)}"
+            )
+
+    @staticmethod
+    async def export_redis_data(query: str, file_format: str):
+        data = await Redis.get_data_by_pattern(query)
+        if file_format == "json":
+            temp_json_file = tempfile.NamedTemporaryFile(
+                delete=False, mode="w", suffix=".json"
+            )
+            json.dump(data, temp_json_file, indent=2)
+            temp_json_file.close()
+
+            return FileResponse(
+                path=temp_json_file.name,
+                filename="quiz_results.json",
+                media_type="multipart/form-data",
+            )
+
+        elif file_format == "csv":
+            with tempfile.NamedTemporaryFile(
+                delete=False, mode="w", suffix=".csv"
+            ) as temp_csv_file:
+                fieldnames = [
+                    "user_id",
+                    "company_name",
+                    "quiz_name",
+                    "question",
+                    "answer",
+                    "is_true",
+                ]
+                writer = csv.DictWriter(temp_csv_file, fieldnames=fieldnames)
+                writer.writeheader()
+                for item in data:
+                    user_id = item["user_id"]
+                    company_name = item["company_name"]
+                    quiz_name = item["quiz_name"]
+                    answers = item["answers"]
+                    for question_data in answers:
+                        writer.writerow(
+                            {
+                                "user_id": user_id,
+                                "company_name": company_name,
+                                "quiz_name": quiz_name,
+                                "question": question_data["question"],
+                                "answer": ", ".join(question_data["answer"]),
+                                "is_true": question_data["is_correct"],
+                            }
+                        )
+            return FileResponse(
+                temp_csv_file.name,
+                filename="quiz_results.csv",
+                media_type="multipart/form-data",
             )

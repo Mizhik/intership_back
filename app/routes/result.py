@@ -1,3 +1,4 @@
+from typing import Optional
 from uuid import UUID
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -62,3 +63,29 @@ async def average_score_user_in_system(
     result_service: ResultService = Depends(get_result_service),
 ):
     return await result_service.get_user_average_across_system(user_id, current_user)
+
+
+@router.get("/my/download")
+async def my_results(
+    user_id: UUID,
+    file_format: str,
+    current_user=Depends(AuthService.get_current_user),
+    result_service: ResultService = Depends(get_result_service),
+):
+    return await result_service.download_user_results(
+        user_id, current_user, file_format
+    )
+
+
+@router.get("/member/download")
+async def member_results(
+    company_id: UUID,
+    file_format: str,
+    user_id: Optional[UUID] = None,
+    quiz_id: Optional[UUID] = None,
+    current_user=Depends(AuthService.get_current_user),
+    result_service: ResultService = Depends(get_result_service),
+):
+    return await result_service.download_member_results(
+        company_id, current_user, file_format, user_id, quiz_id
+    )
