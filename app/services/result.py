@@ -1,3 +1,4 @@
+from typing import Optional
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -121,3 +122,32 @@ class ResultService:
         average_percentage = total_score_percentage / len(results)
 
         return {"average_percentage_system": average_percentage}
+
+    async def download_user_results(
+        self, user_id: UUID, current_user: User, file_format: str
+    ):
+        if user_id != current_user.id:
+            raise UserForbidden
+
+        query = f"{user_id}:*:*"
+        return await Redis.export_redis_data(query, file_format)
+
+    async def download_member_results(
+        self,
+        company_id: UUID,
+        current_user: User,
+        file_format: str,
+        user_id: Optional[UUID] = None,
+        quiz_id: Optional[UUID] = None,
+    ):
+        if not await self.action_repository.is_user_owner_or_admin(company_id, current_user.id):
+            raise UserForbidden
+        if user_id and not quiz_id:
+            if not await self.action_repository.is_user_member(user_id, company_id):
+                query = f"{user_id}:*:{company_id}"
+        elif quiz_id and not user_id:
+            query = f"*:{quiz_id}:{company_id}"
+        else:
+            query = f"*:*:{company_id}"
+        print(query)
+        return await Redis.export_redis_data(query, file_format)
