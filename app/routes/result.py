@@ -65,6 +65,7 @@ async def average_score_user_in_system(
     return await result_service.get_user_average_across_system(user_id, current_user)
 
 
+
 @router.get("/my/download")
 async def my_results(
     user_id: UUID,

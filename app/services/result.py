@@ -123,6 +123,34 @@ class ResultService:
 
         return {"average_percentage_system": average_percentage}
 
+    async def get_analytics_user_by_all_quizzes(
+        self,
+        user_id: UUID,
+        current_user: User,
+    ):
+        if user_id != current_user.id:
+            raise UserForbidden
+
+        attempts = await self.repository.get_results_by_user(user_id)
+        total_score = 0
+        list_attempts = []
+
+        for quiz in attempts:
+            quiz_name = (await self.quiz_repository.get_one(id=quiz.quiz_id)).title
+
+            total_score += quiz.score_percentage
+
+            list_attempts.append(
+                {
+                    "quiz_name": quiz_name,
+                    "last_attempt": quiz.create_at,
+                    "score_percentage": quiz.score_percentage,
+                    "average_score": round(total_score / (len(list_attempts) + 1), 1),
+                }
+            )
+
+        return list_attempts
+
     async def download_user_results(
         self, user_id: UUID, current_user: User, file_format: str
     ):
@@ -140,7 +168,9 @@ class ResultService:
         user_id: Optional[UUID] = None,
         quiz_id: Optional[UUID] = None,
     ):
-        if not await self.action_repository.is_user_owner_or_admin(company_id, current_user.id):
+        if not await self.action_repository.is_user_owner_or_admin(
+            company_id, current_user.id
+        ):
             raise UserForbidden
         if user_id and not quiz_id:
             if not await self.action_repository.is_user_member(user_id, company_id):
@@ -149,5 +179,4 @@ class ResultService:
             query = f"*:{quiz_id}:{company_id}"
         else:
             query = f"*:*:{company_id}"
-        print(query)
         return await Redis.export_redis_data(query, file_format)

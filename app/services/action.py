@@ -1,5 +1,4 @@
 from uuid import UUID
-from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.dtos.action import ActionDetail
@@ -42,13 +41,13 @@ class ActionService:
             user_id=user_id, company_id=company_id
         )
 
-        await send_invitation_status_msg(user_action)
-
         if not user_action:
             action = dict(
                 user_id=user_id, company_id=company_id, status=ActionStatus.INVITED
             )
             return await self.repository.create(action)
+
+        await send_invitation_status_msg(user_action)
 
     async def cancel_invitation(
         self, invitation_id: UUID, current_user: User
