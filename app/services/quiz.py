@@ -2,9 +2,11 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.dtos.quiz import QuestionSchema, QuizSchema, QuizUpdate
-from app.entity.models import Answer, Question, User
+from app.entity.models import Answer, Notification, User
 from app.repository.action import ActionRepository
 from app.repository.answer import AnswerRepository
+from app.repository.company import CompanyRepository
+from app.repository.notification import NotificationRepository
 from app.repository.question import QuestionRepository
 from app.repository.quiz import QuizRepository
 
@@ -18,12 +20,16 @@ class QuizService:
         action_repository: ActionRepository,
         question_repository: QuestionRepository,
         answer_repository: AnswerRepository,
+        notification_repository: NotificationRepository,
+        company_repository: CompanyRepository
     ):
         self.db = db
         self.repository = repository
         self.action_repository = action_repository
         self.question_repository = question_repository
         self.answer_repository = answer_repository
+        self.notification_repository = notification_repository
+        self.company_repository = company_repository
 
     async def create_question_with_answers(self, quiz_id: UUID, question_data: QuestionSchema):
         question_dict = {
@@ -52,6 +58,18 @@ class QuizService:
 
         for question_data in body.questions:
             await self.create_question_with_answers(quiz.id, question_data)
+
+        result = []
+        users = await self.action_repository.get_users_by_company(company_id)
+        company = await self.company_repository.get_one_or_404({"id": company_id})
+        for user in users:
+            notification = Notification(
+                user_id=user.id,
+                text=f"Новий квіз {quiz.title} від компанії {company.name}",
+            )
+
+            result.append(notification)
+        await self.notification_repository.create_many(result)
 
         await self.db.commit()
         await self.db.refresh(quiz)

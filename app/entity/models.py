@@ -15,6 +15,7 @@ class User(Base):
     password: Mapped[str] = mapped_column(String(255), nullable=False)
     actions:Mapped[list["Action"]] = relationship("Action", back_populates='user', lazy="selectin", cascade="all, delete-orphan")
     results: Mapped[list["Result"]] = relationship("Result", back_populates="user", lazy="selectin", cascade="all, delete-orphan")
+    notifications: Mapped[list["Notification"]] = relationship("Notification", back_populates="user", lazy="selectin", cascade="all, delete-orphan")
 
 class Company(Base):
     __tablename__ = "companies"
@@ -65,3 +66,10 @@ class Result(Base):
     score_percentage: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     user:Mapped["User"] = relationship("User", back_populates="results", lazy="selectin")
     quiz: Mapped["Quiz"] = relationship("Quiz", back_populates="results", lazy="selectin")
+
+class Notification(Base):
+    __tablename__ = "notifications"
+    user_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True),ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    text: Mapped[str] = mapped_column(String, nullable=False)
+    status: Mapped[bool] = mapped_column(Boolean, default=False)
+    user: Mapped["User"] = relationship("User", back_populates="notifications", lazy="selectin")

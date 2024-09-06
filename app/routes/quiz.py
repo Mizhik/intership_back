@@ -7,6 +7,8 @@ from app.dtos.quiz import QuizResponseSchema, QuizSchema, QuizUpdate
 from app.entity.models import User
 from app.repository.action import ActionRepository
 from app.repository.answer import AnswerRepository
+from app.repository.company import CompanyRepository
+from app.repository.notification import NotificationRepository
 from app.repository.question import QuestionRepository
 from app.repository.quiz import QuizRepository
 from app.services.auth import AuthService
@@ -20,8 +22,16 @@ async def get_quiz_service(db: AsyncSession = Depends(get_db)):
     action_repository = ActionRepository(db)
     question_repository = QuestionRepository(db)
     answer_repository = AnswerRepository(db)
+    notification_repository = NotificationRepository(db)
+    company_repository = CompanyRepository(db)
     return QuizService(
-        db, quiz_repository, action_repository, question_repository, answer_repository
+        db,
+        quiz_repository,
+        action_repository,
+        question_repository,
+        answer_repository,
+        notification_repository,
+        company_repository,
     )
 
 
