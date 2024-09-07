@@ -26,6 +26,9 @@ class Settings(BaseSettings):
     ALGORITHM: str="algorithm"
     ISSUER: str = "ISSUER"
 
+    CELERY_BROKER_URL: str = "redis://localhost:6379/0"
+    CELERY_BACKEND_URL: str = "redis://localhost:6379/1"
+
     @property
     def ASYNC_DATABASE_URL(self) -> str:
         return f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"

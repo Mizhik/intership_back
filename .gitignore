@@ -3,3 +3,4 @@ __pycache__
 postgres_data
 app.log
 test.db
+celerybeat-schedule.*

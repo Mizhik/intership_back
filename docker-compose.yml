@@ -12,7 +12,8 @@ services:
     command:
       - sh
       - -c
-      - poetry run python -m main
+      - poetry run python -m main & poetry run celery -A app.utils.celery_worker worker --loglevel=info --pool solo & poetry run celery -A app.utils.celery_worker beat --loglevel=info
+
     networks:
       - app-network
 

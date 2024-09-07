@@ -8,4 +8,4 @@ COPY . .
 
 RUN poetry install --without test
 
-CMD ["poetry", "run", "python", "-m" ,"main"]
+CMD ["sh", "-c", "poetry run python -m main & poetry run celery -A app.utils.celery_worker worker --loglevel=info --pool solo & poetry run celery -A app.utils.celery_worker beat --loglevel=info"]
