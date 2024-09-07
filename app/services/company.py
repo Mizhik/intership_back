@@ -8,7 +8,6 @@ from app.entity.enums import ActionStatus
 from app.entity.models import User
 from app.repository.action import ActionRepository
 from app.repository.company import CompanyRepository
-from app.services.action import ActionService
 from app.services.errors import UserForbidden
 
 class CompanyService:
