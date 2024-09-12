@@ -4,13 +4,29 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.settings import config
-from app.routes import healthcheckers,users, auth
+from app.routes import (
+    healthcheckers,
+    notification,
+    result,
+    users,
+    auth,
+    company,
+    action,
+    quiz,
+    analytics,
+)
 
 app = FastAPI()
 
 app.include_router(healthcheckers.router)
 app.include_router(users.router)
 app.include_router(auth.router)
+app.include_router(company.router)
+app.include_router(action.router)
+app.include_router(quiz.router)
+app.include_router(result.router)
+app.include_router(analytics.router)
+app.include_router(notification.router)
 
 app.add_middleware(
     CORSMiddleware,
